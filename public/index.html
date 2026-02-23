@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Matrix Playlist</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 16px; }
+    button { padding: 10px 14px; margin-right: 8px; }
+    #preview { width: 256px; height: 256px; image-rendering: pixelated; border: 1px solid #ccc; }
+    .row { display:flex; gap: 12px; align-items:center; flex-wrap:wrap; }
+  </style>
+</head>
+<body>
+  <h2>128×128 Matrix Playlist</h2>
+
+  <div class="row">
+    <label>
+      Add images:
+      <input id="file" type="file" accept="image/*" multiple />
+    </label>
+  </div>
+
+  <div class="row" style="margin-top:12px;">
+    <button id="prev">Prev</button>
+    <button id="next">Next</button>
+    <button id="send">Send to display</button>
+  </div>
+
+  <p id="status"></p>
+  <canvas id="preview" width="128" height="128"></canvas>
+
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <script type="module" src="./app.js"></script>
+  <script>
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("./service-worker.js");
+  }
+  </script>
+</body>
+</html>
