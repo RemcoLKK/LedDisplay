@@ -10,9 +10,9 @@ const btnSend = document.getElementById("send");
 // ---- HiveMQ Cloud settings ----
 // In HiveMQ Cloud "Cluster Details" you’ll see the host like: xxxx.s1.eu.hivemq.cloud
 // WSS is typically wss://HOST:8884/mqtt  :contentReference[oaicite:1]{index=1}
-const HOST = "broker.hivemq.com"; // e.g. "abcd1234.s1.eu.hivemq.cloud"
-const USERNAME = "YOUR_USERNAME";
-const PASSWORD = "YOUR_PASSWORD";
+const HOST = "cc0f333c4acf4560a6c5d7d55405eab4.s1.eu.hivemq.cloud"; // e.g. "abcd1234.s1.eu.hivemq.cloud"
+const USERNAME = "Remco";
+const PASSWORD = "Remco121";
 
 const client = mqtt.connect(`wss://${HOST}:8884/mqtt`, {
   username: USERNAME,
