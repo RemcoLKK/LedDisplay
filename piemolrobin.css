@@ -1,0 +1,79 @@
+body { 
+    font-family:
+    system-ui, sans-serif;
+    padding: 16px;
+    background-color: black;
+}
+
+h2 {
+    text-align: center;
+    color: white;
+}
+
+button {
+    padding: 10px 14px;
+    margin-right: 8px;
+    background-color: darkblue;
+    border: none;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    border-radius: 12px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: purple;
+}
+
+.upload {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+}
+
+.buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#preview { 
+    display: block;
+    margin: auto;
+    width: 256px; 
+    height: 256px; 
+    image-rendering: 
+    pixelated; 
+    border: 1px solid white; 
+}
+
+#status {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.row { 
+    display:flex; 
+    gap: 12px; 
+    align-items:center; 
+    flex-wrap:wrap; 
+}
+
+input[type="file"]::file-selector-button {
+    background-color: darkblue;
+    color: white;
+    border: 2px solid black;
+    padding: 8px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: monospace;
+
+}
+
+input[type="file"]::file-selector-button:hover {
+    background-color: purple;
+}
