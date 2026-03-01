@@ -124,31 +124,46 @@ function canvasToRGB565(cnv) {
   return out;
 }
 
-// ---- Publish binary chunks with 8-byte header ----
-async function publishFrame(rgb565Bytes) {
-  const chunkSize = 1024;
-  const totalChunks = Math.ceil(rgb565Bytes.length / chunkSize);
+// ---- Base64 helpers (Uint8Array -> base64) ----
+function uint8ToBase64(u8) {
+  // Convert in smaller slices to avoid call stack / argument limits
+  let binary = "";
+  const chunk = 0x8000; // 32768
+  for (let i = 0; i < u8.length; i += chunk) {
+    binary += String.fromCharCode(...u8.subarray(i, i + chunk));
+  }
+  return btoa(binary);
+}
 
-  const myFrameId = frameId++ & 0xFFFF;
+// ---- Publish JSON+base64 chunks to /img/chunk ----
+async function publishFrame(rgb565Bytes) {
+  // Keep JSON payload sizes reasonable for MQTT over WSS + ESP buffer
+  // With ESP setBufferSize(8192), staying < ~6KB per message is safe.
+  // raw bytes -> base64 expands ~4/3, plus JSON overhead.
+  const rawChunkSize = 2400; // ~3200 base64 chars, fits well in 8KB JSON doc
+  const totalChunks = Math.ceil(rgb565Bytes.length / rawChunkSize);
+
+  const myId = `frame_${Date.now()}_${(frameId++).toString(16)}`; // unique per send
+  const topic = "/img/chunk";
 
   for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
-    const start = chunkIndex * chunkSize;
-    const end = Math.min(start + chunkSize, rgb565Bytes.length);
+    const start = chunkIndex * rawChunkSize;
+    const end = Math.min(start + rawChunkSize, rgb565Bytes.length);
     const chunk = rgb565Bytes.subarray(start, end);
 
-    const payload = new Uint8Array(8 + chunk.length);
-    payload[0] = 0x4D; // 'M'
-    payload[1] = 0x58; // 'X'
-    payload[2] = (myFrameId >> 8) & 0xFF;
-    payload[3] = myFrameId & 0xFF;
-    payload[4] = (chunkIndex >> 8) & 0xFF;
-    payload[5] = chunkIndex & 0xFF;
-    payload[6] = (totalChunks >> 8) & 0xFF;
-    payload[7] = totalChunks & 0xFF;
-    payload.set(chunk, 8);
+    const msg = {
+      id: myId,
+      type: "image/rgb565", // you said you'll include the type in JSON
+      w: 128,
+      h: 128,
+      idx: chunkIndex,
+      total: totalChunks,
+      b64: uint8ToBase64(chunk),
+    };
 
-    client.publish("matrix/frame", payload, { qos: 0 });
+    client.publish(topic, JSON.stringify(msg), { qos: 0 });
+
     // tiny yield so browser stays responsive
-    await new Promise(r => setTimeout(r, 0));
+    await new Promise((r) => setTimeout(r, 0));
   }
 }
