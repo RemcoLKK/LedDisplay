@@ -6,6 +6,7 @@ const ctx = canvas.getContext("2d", { willReadFrequently: true });
 const btnPrev = document.getElementById("prev");
 const btnNext = document.getElementById("next");
 const btnSend = document.getElementById("send");
+const btnShowTime = document.getElementById("show time");
 
 // ---- HiveMQ Cloud settings ----
 // In HiveMQ Cloud "Cluster Details" you’ll see the host like: xxxx.s1.eu.hivemq.cloud
@@ -63,6 +64,23 @@ btnSend.addEventListener("click", async () => {
 
   await publishFrame(rgb565);
   setStatus(`Sent: ${files[idx].name} (frameId=${frameId-1})`);
+});
+
+btnShowTime.addEventListener("click", () => {
+  if (!client.connected) {
+    setStatus("Not connected to MQTT yet.");
+    return;
+  }
+
+  client.publish("/cmd", "showtime", { qos: 0 }, (err) => {
+    if (err) {
+      setStatus("Failed to send showtime command.");
+      console.error(err);
+      return;
+    }
+
+    setStatus("Sent command: showtime");
+  });
 });
 
 // ---- Rendering: fit image into 128x128 (center-crop style) ----
