@@ -6,7 +6,7 @@ const ctx = canvas.getContext("2d", { willReadFrequently: true });
 const btnPrev = document.getElementById("prev");
 const btnNext = document.getElementById("next");
 const btnSend = document.getElementById("send");
-const btnShowTime = document.getElementById("show time");
+const btnShowTime = document.getElementById("btnshowtime");
 
 // ---- HiveMQ Cloud settings ----
 // In HiveMQ Cloud "Cluster Details" you’ll see the host like: xxxx.s1.eu.hivemq.cloud
