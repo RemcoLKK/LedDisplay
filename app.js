@@ -152,24 +152,61 @@ function fileToImage(file) {
 
 // ---- Convert canvas RGBA -> RGB565 (big-endian or little-endian; pick one and match ESP32) ----
 // We'll use BIG-ENDIAN (network order): high byte first, then low byte.
+//
+// RGB565 only keeps 5/6/5 bits per channel, so a straight round/truncate causes
+// visible banding on smooth gradients (skies, skin tones) - the panel itself can
+// show far more shades (10-bit PWM per channel) but the wire format can't carry
+// them. Floyd-Steinberg error diffusion fakes back some of that lost detail: the
+// rounding error of each pixel is pushed onto its not-yet-processed neighbours,
+// so at normal viewing distance the eye blends runs of two adjacent quantized
+// colors into something closer to the original in-between shade. Doesn't add a
+// single extra LED - it just spends the LEDs you have more cleverly.
 function canvasToRGB565(cnv) {
   const { width, height } = cnv;
   const imageData = ctx.getImageData(0, 0, width, height).data;
   const out = new Uint8Array(width * height * 2);
 
+  // Per-channel error-accumulation buffers, seeded with the source image.
+  const rBuf = new Float32Array(width * height);
+  const gBuf = new Float32Array(width * height);
+  const bBuf = new Float32Array(width * height);
+  for (let i = 0, p = 0; i < imageData.length; i += 4, p++) {
+    rBuf[p] = imageData[i];
+    gBuf[p] = imageData[i + 1];
+    bBuf[p] = imageData[i + 2];
+  }
+
+  // Floyd-Steinberg: 7/16 right, 3/16 below-left, 5/16 below, 1/16 below-right.
+  const diffuse = (buf, x, y, err) => {
+    if (x + 1 < width) buf[y * width + x + 1] += (err * 7) / 16;
+    if (y + 1 < height) {
+      if (x - 1 >= 0) buf[(y + 1) * width + x - 1] += (err * 3) / 16;
+      buf[(y + 1) * width + x] += (err * 5) / 16;
+      if (x + 1 < width) buf[(y + 1) * width + x + 1] += (err * 1) / 16;
+    }
+  };
+
   let o = 0;
-  for (let i = 0; i < imageData.length; i += 4) {
-    const r = imageData[i + 0];
-    const g = imageData[i + 1];
-    const b = imageData[i + 2];
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const p = y * width + x;
 
-    const rgb565 =
-      ((r & 0xF8) << 8) |
-      ((g & 0xFC) << 3) |
-      ((b & 0xF8) >> 3);
+      const rv = Math.min(255, Math.max(0, rBuf[p]));
+      const gv = Math.min(255, Math.max(0, gBuf[p]));
+      const bv = Math.min(255, Math.max(0, bBuf[p]));
 
-    out[o++] = (rgb565 >> 8) & 0xFF; // hi
-    out[o++] = rgb565 & 0xFF;        // lo
+      const r5 = Math.round((rv / 255) * 31); // 5 bits
+      const g6 = Math.round((gv / 255) * 63); // 6 bits
+      const b5 = Math.round((bv / 255) * 31); // 5 bits
+
+      diffuse(rBuf, x, y, rv - (r5 / 31) * 255);
+      diffuse(gBuf, x, y, gv - (g6 / 63) * 255);
+      diffuse(bBuf, x, y, bv - (b5 / 31) * 255);
+
+      const rgb565 = (r5 << 11) | (g6 << 5) | b5;
+      out[o++] = (rgb565 >> 8) & 0xFF; // hi
+      out[o++] = rgb565 & 0xFF;        // lo
+    }
   }
   return out;
 }
