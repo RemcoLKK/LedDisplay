@@ -7,6 +7,8 @@ const btnPrev = document.getElementById("prev");
 const btnNext = document.getElementById("next");
 const btnSend = document.getElementById("send");
 const btnShowTime = document.getElementById("btnshowtime");
+const brightnessEl = document.getElementById("brightness");
+const brightnessValEl = document.getElementById("brightnessVal");
 
 // ---- HiveMQ Cloud settings ----
 // In HiveMQ Cloud "Cluster Details" you’ll see the host like: xxxx.s1.eu.hivemq.cloud
@@ -81,6 +83,36 @@ btnShowTime.addEventListener("click", () => {
 
     setStatus("Sent command: showtime");
   });
+});
+
+// ---- Brightness slider -> /brightness (plain 0-100 string) ----
+let lastBrightnessSendMs = 0;
+
+function sendBrightness(percent) {
+  if (!client.connected) { setStatus("Not connected to MQTT yet."); return; }
+  client.publish("/brightness", String(percent), { qos: 0 }, (err) => {
+    if (err) {
+      setStatus("Failed to send brightness.");
+      console.error(err);
+    }
+  });
+}
+
+brightnessEl.addEventListener("input", () => {
+  const percent = Number(brightnessEl.value);
+  brightnessValEl.textContent = `${percent}%`;
+
+  // Throttle while dragging so we don't flood the broker; "change" below
+  // (fires on release) guarantees the final value is always sent.
+  const now = Date.now();
+  if (now - lastBrightnessSendMs < 150) return;
+  lastBrightnessSendMs = now;
+  sendBrightness(percent);
+});
+
+brightnessEl.addEventListener("change", () => {
+  lastBrightnessSendMs = Date.now();
+  sendBrightness(Number(brightnessEl.value));
 });
 
 // ---- Rendering: fit image into 128x128 (center-crop style) ----

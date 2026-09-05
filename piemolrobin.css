@@ -40,6 +40,24 @@ button:hover {
     align-items: center;
 }
 
+.brightness-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    color: white;
+}
+
+.brightness-row input[type="range"] {
+    accent-color: darkblue;
+    width: 200px;
+}
+
+.brightness-row span {
+    font-family: monospace;
+    min-width: 4ch;
+}
+
 #preview { 
     display: block;
     margin: auto;
