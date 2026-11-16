@@ -24,7 +24,21 @@ const client = mqtt.connect(`wss://${HOST}:8884/mqtt`, {
   reconnectPeriod: 2000,
 });
 
-client.on("connect", () => setStatus("MQTT connected ✅"));
+client.on("connect", () => {
+  setStatus("MQTT connected ✅");
+  // The display publishes its current face here (retained), so we get it on connect.
+  client.subscribe("/esp32/clockmode");
+});
+
+client.on("message", (topic, payload) => {
+  if (topic === "/esp32/clockmode") updateClockButton(payload.toString());
+});
+
+// Label the toggle with what a click will switch TO.
+function updateClockButton(mode) {
+  if (mode === "analog")       btnShowTime.textContent = "Switch to digital";
+  else if (mode === "digital") btnShowTime.textContent = "Switch to analog";
+}
 client.on("reconnect", () => setStatus("MQTT reconnecting…"));
 client.on("error", (e) => setStatus("MQTT error: " + e.message));
 
@@ -74,14 +88,16 @@ btnShowTime.addEventListener("click", () => {
     return;
   }
 
-  client.publish("/cmd", "showtime", { qos: 0 }, (err) => {
+  // The display flips analog <-> digital (and leaves image mode), then
+  // publishes the new face on /esp32/clockmode, which relabels this button.
+  client.publish("/cmd", "toggleclock", { qos: 0 }, (err) => {
     if (err) {
-      setStatus("Failed to send showtime command.");
+      setStatus("Failed to send clock toggle.");
       console.error(err);
       return;
     }
 
-    setStatus("Sent command: showtime");
+    setStatus("Sent command: toggleclock");
   });
 });
 

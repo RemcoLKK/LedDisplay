@@ -1,4 +1,4 @@
-const CACHE_NAME = "matrix-pwa-v1";
+const CACHE_NAME = "matrix-pwa-v2"; // bump whenever app.js / index.html change
 const ASSETS = [
   "/",
   "/index.html",
@@ -9,6 +9,15 @@ const ASSETS = [
 self.addEventListener("install", e => {
   e.waitUntil(
     caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS))
+  );
+});
+
+// Drop caches from older versions so stale app.js/index.html aren't served.
+self.addEventListener("activate", e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => caches.delete(k)))
+    )
   );
 });
 
