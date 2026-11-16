@@ -1,4 +1,4 @@
-const CACHE_NAME = "matrix-pwa-v2"; // bump whenever app.js / index.html change
+const CACHE_NAME = "matrix-pwa-v3"; // bump whenever app.js / index.html change
 const ASSETS = [
   "/",
   "/index.html",

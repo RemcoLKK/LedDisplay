@@ -40,6 +40,23 @@ button:hover {
     align-items: center;
 }
 
+/* Temp / humidity - same orange & blue as on the LED display */
+.climate {
+    display: flex;
+    justify-content: center;
+    align-items: baseline;
+    gap: 24px;
+    margin-bottom: 12px;
+    font-family: monospace;
+    font-size: 1.6rem;
+    font-weight: bold;
+}
+
+.climate-temp { color: rgb(255, 140, 0); }
+.climate-hum  { color: rgb(0, 170, 255); }
+
+.climate.offline { opacity: 0.4; }
+
 .brightness-row {
     display: flex;
     justify-content: center;

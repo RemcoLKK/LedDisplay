@@ -28,11 +28,36 @@ client.on("connect", () => {
   setStatus("MQTT connected ✅");
   // The display publishes its current face here (retained), so we get it on connect.
   client.subscribe("/esp32/clockmode");
+  // Retained {"temp":21.3,"hum":48.2,"online":true}, updated every ~20s.
+  client.subscribe("/esp32/climate");
 });
 
 client.on("message", (topic, payload) => {
   if (topic === "/esp32/clockmode") updateClockButton(payload.toString());
+  else if (topic === "/esp32/climate") updateClimate(payload.toString());
 });
+
+// ---- Temperature / humidity from the display's sensor ----
+const climateEl = document.getElementById("climate");
+const climateTempEl = document.getElementById("climateTemp");
+const climateHumEl = document.getElementById("climateHum");
+
+function updateClimate(text) {
+  let data;
+  try { data = JSON.parse(text); } catch { return; }
+
+  const online = data.online && typeof data.temp === "number" && typeof data.hum === "number";
+  climateEl.classList.toggle("offline", !online);
+  if (online) {
+    climateTempEl.textContent = `${data.temp.toFixed(1)}°C`;
+    climateHumEl.textContent = `${Math.round(data.hum)}%`;
+    climateEl.title = `Updated ${new Date().toLocaleTimeString()}`;
+  } else {
+    climateTempEl.textContent = "--.-°C";
+    climateHumEl.textContent = "--%";
+    climateEl.title = "Sensor offline";
+  }
+}
 
 // Label the toggle with what a click will switch TO.
 function updateClockButton(mode) {
